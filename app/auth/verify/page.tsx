@@ -1,11 +1,19 @@
 // app/verify/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyPageContent />
+    </Suspense>
+  );
+}
+
+function VerifyPageContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
   const verification_code = searchParams.get("verification_code") || "";
@@ -14,6 +22,7 @@ export default function VerifyPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const backendUrl = process.env.BACKEND || "http://localhost:5000";
+
   useEffect(() => {
     const verifyUser = async () => {
       try {
