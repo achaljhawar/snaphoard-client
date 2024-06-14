@@ -33,7 +33,7 @@ interface LikeEventData {
 }
 import withAuth from "@/components/withAuth";
 import exp from "constants";
-function mainfeedpage() {
+function Mainfeedpage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
@@ -311,4 +311,4 @@ function eyeicon(props: React.SVGProps<SVGSVGElement>) {
     <circle cx="12" cy="12" r="3" />
   </svg>;
 }
-export default withAuth(mainfeedpage);
+export default withAuth(Mainfeedpage);
