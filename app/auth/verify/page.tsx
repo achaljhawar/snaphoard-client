@@ -21,7 +21,7 @@ function VerifyPageContent() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
-  const backendUrl = process.env.BACKEND || "http://localhost:5000";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
 
   useEffect(() => {
     const verifyUser = async () => {

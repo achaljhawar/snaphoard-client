@@ -11,7 +11,7 @@ const withAuth = <P extends object>(Component: React.ComponentType<P>) => {
       const checkAuth = async () => {
         try {
           const token = sessionStorage.getItem("token");
-          const backendUrl = process.env.BACKEND || "http://localhost:5000";
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
           if (token !== null && token !== undefined) {
             const response = await fetch(backendUrl + "/api/checkauth", {
               method: "POST",

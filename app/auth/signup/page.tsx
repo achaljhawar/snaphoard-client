@@ -56,7 +56,7 @@ function LoginForm() {
 
   const onSubmit = async (data: TAuthCredentialValidator) => {
     try {
-      const backendUrl = process.env.BACKEND || "http://localhost:5000";
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
       const response = await fetch(backendUrl + "/api/users", {
         method: "POST",
         headers: {
