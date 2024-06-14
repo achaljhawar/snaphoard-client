@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { parseJwt } from "@/lib/utils";
+import withAuth from "@/components/withAuth";
 const socket = io("http://localhost:5000", {
   reconnection: true,
 });
@@ -22,7 +23,7 @@ interface LikeEventData {
   post_id: number;
   user_id: number;
 }
-export default function Page({ params }: { params: { slug: number } }) {
+function Page({ params }: { params: { slug: number } }) {
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [likecount, setlikecount] = useState<number>(0);
@@ -83,6 +84,7 @@ export default function Page({ params }: { params: { slug: number } }) {
           setPostInfo(data);
           setlikecount(data.likecount);
           setIsLiked(data.isliked);
+          setIsSaved(data.issaved); // Add this line
         } else {
           console.error("Error fetching post info:", response.statusText);
         }
@@ -118,22 +120,50 @@ export default function Page({ params }: { params: { slug: number } }) {
       }
     }
   };
+  const handleSave = async () => {
+    const token = sessionStorage.getItem("token");
+    if (isLoggedIn && token) {
+      try {
+        const url = isSaved
+          ? backendUrl + "/api/unsave"
+          : backendUrl + "/api/save";
+        console.log("Sending save/unsave request to:", url);
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ slug }),
+        });
+        if (response.ok) {
+          const result = await response.json();
+          console.log("Save/unsave response:", result);
+          setIsSaved(!isSaved);
+        } else {
+          console.error("Error updating save status:", response.statusText);
+        }
+      } catch (err) {
+        console.error("Error updating save status:", err);
+      }
+    }
+  };
   useEffect(() => {
     const addLikeHandler = ({ post_id, user_id }: LikeEventData) => {
       console.log("ADD LIKE", post_id, user_id);
       setlikecount((prevCount) => prevCount + 1);
     };
-  
+
     const removeLikeHandler = ({ post_id, user_id }: LikeEventData) => {
       console.log("REMOVE LIKE", post_id, user_id);
       setlikecount((prevCount) => prevCount - 1);
     };
-  
+
     socket.on("add-like", addLikeHandler);
     socket.on("remove-like", removeLikeHandler);
-  
+
     console.log("SOCKET IO", socket);
-      return () => {
+    return () => {
       socket.off("add-like", addLikeHandler);
       socket.off("remove-like", removeLikeHandler);
     };
@@ -188,8 +218,15 @@ export default function Page({ params }: { params: { slug: number } }) {
                 <HeartIcon className="w-5 h-5" />
                 <span className="sr-only">Like</span>
               </Button>
-              <Button variant="ghost" size="icon">
-                <SaveIcon className="w-5 h-5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSave}
+                className={`${
+                  isSaved ? "text-blue-500 hover:text-blue-600" : ""
+                }`}
+              >
+                <BookmarkIcon className="w-5 h-5" filled={isSaved} />
                 <span className="sr-only">Save</span>
               </Button>
               <Button variant="outline">
@@ -290,8 +327,9 @@ function ReplyIcon(props: IconProps) {
     </svg>
   );
 }
-
-function SaveIcon(props: IconProps) {
+function BookmarkIcon(
+  props: React.SVGProps<SVGSVGElement> & { filled?: boolean }
+) {
   return (
     <svg
       {...props}
@@ -299,15 +337,14 @@ function SaveIcon(props: IconProps) {
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="none"
+      fill={props.filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-      <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
-      <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
     </svg>
   );
 }
+export default withAuth(Page);

@@ -25,6 +25,7 @@ const Navbar: FC<ComponentProps> = () => {
   const [username, setUsername] = useState<string>("");
   const [fullName, setFullName] = useState<string>("");
   const [initials, setInitials] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>("");
 
   useEffect(() => {
     setTheme(isDarkMode ? "dark" : "light");
@@ -49,6 +50,8 @@ const Navbar: FC<ComponentProps> = () => {
             setUsername(payload.username);
             const firstName = payload.firstName;
             const lastName = payload.lastName;
+            const role = payload.role;
+            setUserRole(role);
             setFullName(`${firstName} ${lastName}`);
             setInitials(`${firstName[0]}${lastName[0]}`);
           } else {
@@ -106,7 +109,7 @@ const Navbar: FC<ComponentProps> = () => {
           Home
         </Link>
         <Link
-          href="#"
+          href="/posts"
           className={cn(
             `text-base font-medium transition-colors ${
               isDarkMode
@@ -121,6 +124,26 @@ const Navbar: FC<ComponentProps> = () => {
         </Link>
         {loggedIn ? (
           <>
+            {userRole === "Poster" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">Poster</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>
+                    <Link href="/create-post">Create New Post</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/my-posts">My Posts</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {userRole === "Viewer" && (
+              <Button variant="outline" disabled>
+                Viewer
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -160,13 +183,10 @@ const Navbar: FC<ComponentProps> = () => {
                   Liked Posts
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <GiftIcon className="w-4 h-4 mr-2" />
-                  Gifted Posts
+                  <BookmarkIcon className="w-4 h-4 mr-2" />
+                  Saved Posts
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CalendarDaysIcon className="w-4 h-4 mr-2" />
-                  Uploaded Posts
-                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOutIcon className="w-4 h-4 mr-2" />
@@ -417,4 +437,24 @@ const FilePenIcon: React.FC<FilePenIconProps> = (props) => {
     </svg>
   );
 };
+function BookmarkIcon(
+  props: React.SVGProps<SVGSVGElement> & { filled?: boolean }
+) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill={props.filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+    </svg>
+  );
+}
 export default Navbar;

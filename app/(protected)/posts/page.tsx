@@ -31,9 +31,11 @@ interface LikeEventData {
   post_id: number;
   user_id: number;
 }
-
-export default function InstagramFeedPage() {
+import withAuth from "@/components/withAuth";
+import exp from "constants";
+function mainfeedpage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
 
   useEffect(() => {
@@ -66,7 +68,35 @@ export default function InstagramFeedPage() {
 
     fetchPosts();
   }, [backendUrl]);
-
+  const handleSave = async (postId: number, isSaved: boolean) => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      try {
+        const url = isSaved
+          ? `${backendUrl}/api/unsave`
+          : `${backendUrl}/api/save`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ slug: postId }),
+        });
+        if (response.ok) {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) =>
+              post.id === postId ? { ...post, isSaved: !isSaved } : post
+            )
+          );
+        } else {
+          console.error("Error updating save status:", response.statusText);
+        }
+      } catch (err) {
+        console.error("Error updating save status:", err);
+      }
+    }
+  };
   useEffect(() => {
     const addLikeHandler = ({ post_id, user_id }: LikeEventData) => {
       console.log("ADD LIKE", post_id, user_id);
@@ -172,11 +202,16 @@ export default function InstagramFeedPage() {
                       <MessageCircleIcon className="w-4 h-4" />
                       <span className="sr-only">Comments</span>
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleSave(post.id, post.isSaved)}
+                    >
                       <BookmarkIcon
                         className={`w-4 h-4 ${
-                          post.isSaved ? "text-yellow-500" : ""
+                          post.isSaved ? "text-blue-500" : ""
                         }`}
+                        filled={post.isSaved}
                       />
                       <span className="sr-only">Save</span>
                     </Button>
@@ -200,11 +235,9 @@ export default function InstagramFeedPage() {
   );
 }
 
-// BookmarkIcon, HeartIcon, and MessageCircleIcon components remain unchanged
-
-// BookmarkIcon, HeartIcon, and MessageCircleIcon components remain unchanged
-
-function BookmarkIcon(props: React.SVGProps<SVGSVGElement>) {
+function BookmarkIcon(
+  props: React.SVGProps<SVGSVGElement> & { filled?: boolean }
+) {
   return (
     <svg
       {...props}
@@ -212,7 +245,7 @@ function BookmarkIcon(props: React.SVGProps<SVGSVGElement>) {
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="none"
+      fill={props.filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
@@ -278,3 +311,4 @@ function eyeicon(props: React.SVGProps<SVGSVGElement>) {
     <circle cx="12" cy="12" r="3" />
   </svg>;
 }
+export default withAuth(mainfeedpage);
