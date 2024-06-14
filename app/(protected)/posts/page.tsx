@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5000", {
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+const socket = io(backendUrl, {
   reconnection: true,
 });
 
@@ -32,7 +32,6 @@ interface LikeEventData {
   user_id: number;
 }
 import withAuth from "@/components/withAuth";
-import exp from "constants";
 function Mainfeedpage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("scheduled_posts")
       .select("*")
-      .gte("scheduled_at", now.toISOString())
+      .lte("scheduled_at", now.toISOString())
       .order("scheduled_at", { ascending: true })
       .limit(50);
 

@@ -16,7 +16,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { parseJwt } from "@/lib/utils";
 import withAuth from "@/components/withAuth";
-const socket = io("http://localhost:5000", {
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+const socket = io(backendUrl, {
   reconnection: true,
 });
 interface LikeEventData {
