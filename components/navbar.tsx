@@ -26,7 +26,6 @@ const Navbar: FC<ComponentProps> = () => {
   const [fullName, setFullName] = useState<string>("");
   const [initials, setInitials] = useState<string>("");
   const [userRole, setUserRole] = useState<string>("");
-
   useEffect(() => {
     setTheme(isDarkMode ? "dark" : "light");
   }, [isDarkMode, setTheme]);
@@ -131,10 +130,10 @@ const Navbar: FC<ComponentProps> = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem>
-                    <Link href="/create-post">Create New Post</Link>
+                    <Link href="/posts/create">Create New Post</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link href="/my-posts">My Posts</Link>
+                    <Link href="#">My Posts</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -198,7 +197,7 @@ const Navbar: FC<ComponentProps> = () => {
         ) : (
           <>
             <Link
-              href="#"
+              href="/auth/signin"
               className={cn(
                 `text-base font-medium transition-colors ${
                   isDarkMode
@@ -212,7 +211,7 @@ const Navbar: FC<ComponentProps> = () => {
               Login
             </Link>
             <Link
-              href="#"
+              href="/auth/signup"
               className={cn(
                 `text-base font-medium transition-colors ${
                   isDarkMode

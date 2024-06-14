@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { useUploadThing } from "@/components/uploadthing";
 import * as z from "zod";
+import { toast, Toaster } from "react-hot-toast";
 
 const Component: React.FC = () => {
   const [isScheduled, setIsScheduled] = useState<boolean>(false);
@@ -33,59 +34,66 @@ const Component: React.FC = () => {
 
   const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
-      alert("uploaded successfully!");
+      toast.success("Uploaded successfully!");
     },
-    onUploadError: (res) => {
-      alert("error occurred while uploading");
+    onUploadError: (error) => {
+      toast.error(`Error occurred while uploading: ${error.message}`);
     },
     onUploadBegin: () => {
-      alert("upload has begun");
+      toast.loading("Upload has begun...");
     },
   });
 
-  const formSchema = z.object({
-    imageObject: z
-      .instanceof(File)
-      .refine(
-        (file) =>
-          file.type === "image/png" ||
-          file.type === "image/jpg" ||
-          file.type === "image/jpeg" ||
-          file.type === "image/gif",
-        "Only PNG, JPG, and JPEG files are allowed"
-      ),
-    caption: z.string().min(1, "Caption is required"),
-    date: z.date().optional(),
-    hour: z
-      .string()
-      .refine((val) => !isNaN(parseInt(val)), "Invalid hour format")
-      .refine((val) => val.length === 2, "Hour must be in 24-hour format")
-      .optional(),
-    minute: z
-      .string()
-      .refine((val) => !isNaN(parseInt(val)), "Invalid minute format")
-      .refine((val) => val.length === 2, "Minute must be in 2-digit format")
-      .optional(),
-  }).refine((data) => {
-    if (isScheduled) {
-      if (!data.date || !data.hour || !data.minute) {
-        return false;
+  const formSchema = z
+    .object({
+      imageObject: z
+        .instanceof(File)
+        .refine(
+          (file) =>
+            file.type === "image/png" ||
+            file.type === "image/jpg" ||
+            file.type === "image/jpeg" ||
+            file.type === "image/gif",
+          "Only PNG, JPG, and JPEG files are allowed"
+        ),
+      caption: z.string().min(1, "Caption is required"),
+      date: z.date().optional(),
+      hour: z
+        .string()
+        .refine((val) => !isNaN(parseInt(val)), "Invalid hour format")
+        .refine((val) => val.length === 2, "Hour must be in 24-hour format")
+        .optional(),
+      minute: z
+        .string()
+        .refine((val) => !isNaN(parseInt(val)), "Invalid minute format")
+        .refine((val) => val.length === 2, "Minute must be in 2-digit format")
+        .optional(),
+    })
+    .refine(
+      (data) => {
+        if (isScheduled) {
+          if (!data.date || !data.hour || !data.minute) {
+            return false;
+          }
+          const now = new Date();
+          const scheduledTime = new Date(
+            data.date.getFullYear(),
+            data.date.getMonth(),
+            data.date.getDate(),
+            parseInt(data.hour),
+            parseInt(data.minute)
+          );
+          return scheduledTime > now;
+        }
+        return true;
+      },
+      {
+        message: isScheduled
+          ? `Scheduled time must be in the future and all fields (date, hour, minute) must be set`
+          : "",
+        path: ["scheduledTime"],
       }
-      const now = new Date();
-      const scheduledTime = new Date(
-        data.date.getFullYear(),
-        data.date.getMonth(),
-        data.date.getDate(),
-        parseInt(data.hour),
-        parseInt(data.minute)
-      );
-      return scheduledTime > now;
-    }
-    return true;
-  }, {
-    message: isScheduled ? `Scheduled time must be in the future and all fields (date, hour, minute) must be set` : "",
-    path: ["scheduledTime"],
-  });
+    );
 
   const handleSubmit = async () => {
     try {
@@ -108,8 +116,14 @@ const Component: React.FC = () => {
       }
 
       if (isScheduled) {
-        if (!validatedData.date || !validatedData.hour || !validatedData.minute) {
-          throw new Error("All scheduling fields (date, hour, minute) must be set");
+        if (
+          !validatedData.date ||
+          !validatedData.hour ||
+          !validatedData.minute
+        ) {
+          throw new Error(
+            "All scheduling fields (date, hour, minute) must be set"
+          );
         }
 
         const now = new Date();
@@ -123,9 +137,14 @@ const Component: React.FC = () => {
         );
         const timeDiff = scheduledTime.getTime() - now.getTime();
         const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
-        const minutesDiff = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        console.log(`Time until scheduled: ${hoursDiff} hours and ${minutesDiff} minutes`);
+        const minutesDiff = Math.floor(
+          (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        console.log(
+          `Time until scheduled: ${hoursDiff} hours and ${minutesDiff} minutes`
+        );
         const scheduledTimeISO = scheduledTime.toISOString();
+        toast.success(`Post scheduled for ${scheduledTimeISO}`);
         const uploadResponse = await startUpload([validatedData.imageObject]);
         if (!uploadResponse || uploadResponse.length === 0) {
           throw new Error("Invalid upload response");
@@ -145,17 +164,21 @@ const Component: React.FC = () => {
             scheduledTime: scheduledTimeISO,
           }),
         });
+        if (response.ok) {
+          toast.success("Post created successfully");
+        } else {
+          throw new Error(`Error creating post`);
+        }
       }
-
-      const uploadResponse = await startUpload([validatedData.imageObject]);
-      if (!uploadResponse || uploadResponse.length === 0) {
-        throw new Error("Invalid upload response");
-      }
-      const imageurl = uploadResponse[0].url;
-      console.log("Upload response:", imageurl);
 
       if (!isScheduled) {
         const token = sessionStorage.getItem("token");
+        const uploadResponse = await startUpload([validatedData.imageObject]);
+        if (!uploadResponse || uploadResponse.length === 0) {
+          throw new Error("Invalid upload response");
+        }
+        const imageurl = uploadResponse[0].url;
+        console.log("Upload response:", imageurl);
         const response = await fetch(`${backendUrl}/api/createpost`, {
           method: "POST",
           headers: {
@@ -169,7 +192,7 @@ const Component: React.FC = () => {
         });
         const responseData = await response.json();
         if (response.ok) {
-          console.log("Post created successfully");
+          toast.success("Post created successfully");
         } else {
           throw new Error(`Error creating post: ${responseData.message}`);
         }
@@ -181,12 +204,12 @@ const Component: React.FC = () => {
           .flatMap((issue) => issue)
           .filter((issue): issue is string => typeof issue === "string");
         setValidationErrors(errorMessages);
-        console.log("Validation errors:", errorMessages);
+        toast.error("Validation errors occurred. Please check the form.");
       } else if (err instanceof Error) {
         setValidationErrors([err.message]);
-        console.error("Error occurred while submitting:", err.message);
+        toast.error(`Error: ${err.message}`);
       } else {
-        console.error("An unknown error occured")   
+        toast.error("An unknown error occurred");
       }
     }
   };

@@ -18,8 +18,37 @@ import { AuthCredentialsValidator } from "@/schema/loginmodels";
 import styled from "@emotion/styled";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { useEffect } from "react";
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
 export default function LoginPage() {
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        if (token !== null && token !== undefined) {
+          const response = await fetch(backendUrl + "/api/checkauth", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (response.ok) {
+            setLoggedIn(true);
+          } else {
+            sessionStorage.removeItem("token");
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    checkAuth();
+  }, [loggedIn]);
+  if (loggedIn) {
+    return null;
+  }
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh]">
       <br />
@@ -51,6 +80,7 @@ function LoginForm() {
   const [token, setToken] = useState(null);
   const [error, setError] = useState<string | null>(null);
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+
   const onSubmit = async (data: TAuthCredentialValidator) => {
     try {
       const response = await fetch(backendUrl + "/api/login", {
