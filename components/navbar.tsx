@@ -72,7 +72,7 @@ const Navbar: FC<ComponentProps> = () => {
   };
 
   const pathname = usePathname();
-  if (pathname === "/auth/verify") {
+  if (pathname === "/auth/verify" || pathname === "/404") {
     return null;
   }
 

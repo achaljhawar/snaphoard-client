@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { useUploadThing } from "@/components/uploadthing";
 import * as z from "zod";
+
 const Component: React.FC = () => {
   const [isScheduled, setIsScheduled] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +29,8 @@ const Component: React.FC = () => {
   const [imageObject, setImageObject] = useState<File | null>(null);
   const [selectedHour, setSelectedHour] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [selectedMinute, setSelectedMinute] = useState<string | null>(null);
+
   const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
       alert("uploaded successfully!");
@@ -39,6 +42,7 @@ const Component: React.FC = () => {
       alert("upload has begun");
     },
   });
+
   const formSchema = z.object({
     imageObject: z
       .instanceof(File)
@@ -46,98 +50,129 @@ const Component: React.FC = () => {
         (file) =>
           file.type === "image/png" ||
           file.type === "image/jpg" ||
-          file.type === "image/jpeg",
+          file.type === "image/jpeg" ||
+          file.type === "image/gif",
         "Only PNG, JPG, and JPEG files are allowed"
       ),
     caption: z.string().min(1, "Caption is required"),
-    date: z
-      .date()
-      .refine((val) => val > new Date(), "Date must be in the future")
-      .optional(),
+    date: z.date().optional(),
     hour: z
       .string()
       .refine((val) => !isNaN(parseInt(val)), "Invalid hour format")
       .refine((val) => val.length === 2, "Hour must be in 24-hour format")
       .optional(),
+    minute: z
+      .string()
+      .refine((val) => !isNaN(parseInt(val)), "Invalid minute format")
+      .refine((val) => val.length === 2, "Minute must be in 2-digit format")
+      .optional(),
+  }).refine((data) => {
+    if (isScheduled) {
+      if (!data.date || !data.hour || !data.minute) {
+        return false;
+      }
+      const now = new Date();
+      const scheduledTime = new Date(
+        data.date.getFullYear(),
+        data.date.getMonth(),
+        data.date.getDate(),
+        parseInt(data.hour),
+        parseInt(data.minute)
+      );
+      return scheduledTime > now;
+    }
+    return true;
+  }, {
+    message: isScheduled ? `Scheduled time must be in the future and all fields (date, hour, minute) must be set` : "",
+    path: ["scheduledTime"],
   });
+
   const handleSubmit = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
+      const caption = captionRef.current?.value || "";
+      const formData = {
+        imageObject,
+        caption,
+        date,
+        hour: selectedHour,
+        minute: selectedMinute,
+      };
+
+      setValidationErrors([]);
+
+      const validatedData = await formSchema.parseAsync(formData);
+
+      if (!validatedData.imageObject) {
+        throw new Error("No image selected");
+      }
+
       if (isScheduled) {
-        const caption = captionRef.current?.value || "";
-        const formData = {
-          imageObject,
-          caption,
-          date,
-          hour: selectedHour,
-        };
-
-        setValidationErrors([]);
-
-        const validatedData = await formSchema.parseAsync(formData);
-
-        if (validatedData.imageObject) {
-          const uploadResponse = await startUpload([validatedData.imageObject]);
-          if (uploadResponse && uploadResponse.length > 0) {
-            console.log("Upload response:", uploadResponse[0].url);
-          } else {
-            console.error("Invalid upload response");
-          }
-        } else {
-          console.log("No image selected.");
+        if (!validatedData.date || !validatedData.hour || !validatedData.minute) {
+          throw new Error("All scheduling fields (date, hour, minute) must be set");
         }
-        if (validatedData.date && validatedData.hour) {
-          const scheduledTime = new Date(
-            validatedData.date.getFullYear(),
-            validatedData.date.getMonth(),
-            validatedData.date.getDate(),
-            parseInt(validatedData.hour)
-          );
 
-          if (scheduledTime > new Date()) {
-            console.log("Scheduled post for:", scheduledTime);
-            console.log("Caption:", validatedData.caption);
-          } else {
-            console.error("Scheduled time must be in the future");
-          }
-        } else {
-          console.log("Post caption:", validatedData.caption);
-        }
-      } else {
-        const caption = captionRef.current?.value || "";
-        const formData = {
-          imageObject,
-          caption,
-        };
+        const now = new Date();
 
-        const validatedData = await formSchema.parseAsync(formData);
-        if (validatedData.imageObject) {
-          const uploadResponse = await startUpload([validatedData.imageObject]);
-          if (uploadResponse && uploadResponse.length > 0) {
-            console.log("Upload response:", uploadResponse[0].url);
-            const imageurl = uploadResponse[0].url;
-            const token = sessionStorage.getItem("token");
-            const response = await fetch(backendUrl+"/api/createpost", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({ caption: validatedData.caption, url: imageurl, isScheduled: false}),
-            });
-            const responseData = await response.json();
-            if (response.ok) {
-              console.log("Post created successfully");
-            } else {
-              console.error("Error creating post:", responseData.message);
-            }
-          } else {
-            console.error("Invalid upload response");
-          }
-        } else {
-          console.log("No image selected.");
+        const scheduledTime = new Date(
+          validatedData.date.getFullYear(),
+          validatedData.date.getMonth(),
+          validatedData.date.getDate(),
+          parseInt(validatedData.hour),
+          parseInt(validatedData.minute)
+        );
+        const timeDiff = scheduledTime.getTime() - now.getTime();
+        const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutesDiff = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        console.log(`Time until scheduled: ${hoursDiff} hours and ${minutesDiff} minutes`);
+        const scheduledTimeISO = scheduledTime.toISOString();
+        const uploadResponse = await startUpload([validatedData.imageObject]);
+        if (!uploadResponse || uploadResponse.length === 0) {
+          throw new Error("Invalid upload response");
         }
-        console.log("Post caption:", validatedData.caption);
+        const imageurl = uploadResponse[0].url;
+        console.log("Upload response:", imageurl);
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${backendUrl}/api/createscheduledpost`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            caption: validatedData.caption,
+            url: imageurl,
+            scheduledTime: scheduledTimeISO,
+          }),
+        });
+      }
+
+      const uploadResponse = await startUpload([validatedData.imageObject]);
+      if (!uploadResponse || uploadResponse.length === 0) {
+        throw new Error("Invalid upload response");
+      }
+      const imageurl = uploadResponse[0].url;
+      console.log("Upload response:", imageurl);
+
+      if (!isScheduled) {
+        const token = sessionStorage.getItem("token");
+        const response = await fetch(`${backendUrl}/api/createpost`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            caption: validatedData.caption,
+            url: imageurl,
+          }),
+        });
+        const responseData = await response.json();
+        if (response.ok) {
+          console.log("Post created successfully");
+        } else {
+          throw new Error(`Error creating post: ${responseData.message}`);
+        }
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -147,8 +182,11 @@ const Component: React.FC = () => {
           .filter((issue): issue is string => typeof issue === "string");
         setValidationErrors(errorMessages);
         console.log("Validation errors:", errorMessages);
+      } else if (err instanceof Error) {
+        setValidationErrors([err.message]);
+        console.error("Error occurred while submitting:", err.message);
       } else {
-        console.error("Error occurred while submitting:", err);
+        console.error("An unknown error occured")   
       }
     }
   };
@@ -286,7 +324,7 @@ const Component: React.FC = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="p-4">
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <Select
                             onValueChange={(value) => setSelectedHour(value)}
                           >
@@ -295,6 +333,23 @@ const Component: React.FC = () => {
                             </SelectTrigger>
                             <SelectContent>
                               {Array.from({ length: 24 }, (_, i) => (
+                                <SelectItem
+                                  key={i}
+                                  value={i.toString().padStart(2, "0")}
+                                >
+                                  {i.toString().padStart(2, "0")}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            onValueChange={(value) => setSelectedMinute(value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Minute" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 60 }, (_, i) => (
                                 <SelectItem
                                   key={i}
                                   value={i.toString().padStart(2, "0")}
