@@ -106,7 +106,6 @@ function Likedpostspage() {
   };
   useEffect(() => {
     const addLikeHandler = ({ post_id, user_id }: LikeEventData) => {
-      console.log("ADD LIKE", post_id, user_id);
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === post_id
@@ -117,7 +116,6 @@ function Likedpostspage() {
     };
 
     const removeLikeHandler = ({ post_id, user_id }: LikeEventData) => {
-      console.log("REMOVE LIKE", post_id, user_id);
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === post_id
@@ -130,7 +128,6 @@ function Likedpostspage() {
     socket.on("add-like", addLikeHandler);
     socket.on("remove-like", removeLikeHandler);
 
-    console.log("SOCKET IO", socket);
     return () => {
       socket.off("add-like", addLikeHandler);
       socket.off("remove-like", removeLikeHandler);

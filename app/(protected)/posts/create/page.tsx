@@ -35,6 +35,7 @@ const Component: React.FC = () => {
   const [selectedMinute, setSelectedMinute] = useState<string>("");
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  const [role, setRole] = useState<string>("");
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -50,9 +51,8 @@ const Component: React.FC = () => {
           if (response.ok) {
             setLoggedIn(true);
             const payload = parseJwt(token);
-            const firstName = payload.firstName;
-            const lastName = payload.lastName;
             const role = payload.role;
+            setRole(role);
           } else {
             sessionStorage.removeItem("token");
           }
@@ -63,6 +63,15 @@ const Component: React.FC = () => {
     };
     checkAuth();
   }, [loggedIn]);
+  if (role == "Viewer") {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-xl text-gray-500">
+          You are a Viewer, why are you here?
+        </p>
+      </div>
+    );
+  }
   const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
       toast.success("Uploaded successfully!");
@@ -175,9 +184,7 @@ const Component: React.FC = () => {
         const minutesDiff = Math.floor(
           (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
         );
-        console.log(
-          `Time until scheduled: ${hoursDiff} hours and ${minutesDiff} minutes`
-        );
+
         const scheduledTimeISO = scheduledTime.toISOString();
         toast.success(`Post scheduled for ${scheduledTimeISO}`);
         const uploadResponse = await startUpload([validatedData.imageObject]);
@@ -185,7 +192,6 @@ const Component: React.FC = () => {
           throw new Error("Invalid upload response");
         }
         const imageurl = uploadResponse[0].url;
-        console.log("Upload response:", imageurl);
         const token = sessionStorage.getItem("token");
         const response = await fetch(`${backendUrl}/api/createscheduledpost`, {
           method: "POST",
@@ -214,7 +220,6 @@ const Component: React.FC = () => {
           throw new Error("Invalid upload response");
         }
         const imageurl = uploadResponse[0].url;
-        console.log("Upload response:", imageurl);
         const response = await fetch(`${backendUrl}/api/createpost`, {
           method: "POST",
           headers: {
@@ -281,7 +286,6 @@ const Component: React.FC = () => {
   };
 
   const handleFiles = (files: { base64: React.SetStateAction<string> }) => {
-    console.log(files);
     setUrl(files.base64);
   };
 

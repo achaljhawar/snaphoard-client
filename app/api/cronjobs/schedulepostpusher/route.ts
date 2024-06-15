@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
 
       if (insertError) throw insertError;
 
-      console.log(`Successfully published ${insertedPosts.length} posts.`);
 
       const scheduledPostIds = data.map(post => post.id);
 

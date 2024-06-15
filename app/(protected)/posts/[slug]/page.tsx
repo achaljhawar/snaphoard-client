@@ -128,7 +128,6 @@ function Page({ params }: { params: { slug: number } }) {
         const url = isSaved
           ? backendUrl + "/api/unsave"
           : backendUrl + "/api/save";
-        console.log("Sending save/unsave request to:", url);
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -139,7 +138,6 @@ function Page({ params }: { params: { slug: number } }) {
         });
         if (response.ok) {
           const result = await response.json();
-          console.log("Save/unsave response:", result);
           setIsSaved(!isSaved);
         } else {
           console.error("Error updating save status:", response.statusText);
@@ -151,19 +149,16 @@ function Page({ params }: { params: { slug: number } }) {
   };
   useEffect(() => {
     const addLikeHandler = ({ post_id, user_id }: LikeEventData) => {
-      console.log("ADD LIKE", post_id, user_id);
       setlikecount((prevCount) => prevCount + 1);
     };
 
     const removeLikeHandler = ({ post_id, user_id }: LikeEventData) => {
-      console.log("REMOVE LIKE", post_id, user_id);
       setlikecount((prevCount) => prevCount - 1);
     };
 
     socket.on("add-like", addLikeHandler);
     socket.on("remove-like", removeLikeHandler);
 
-    console.log("SOCKET IO", socket);
     return () => {
       socket.off("add-like", addLikeHandler);
       socket.off("remove-like", removeLikeHandler);
