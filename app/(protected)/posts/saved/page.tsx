@@ -32,40 +32,49 @@ interface LikeEventData {
   user_id: number;
 }
 import withAuth from "@/components/withAuth";
+
 function Likedpostspage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
-  const router = useRouter();
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
-          console.error("No user token found");
-          return;
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [hasNoPosts, setHasNoPosts] = useState(false);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
+    const router = useRouter();
+  
+    useEffect(() => {
+      const fetchPosts = async () => {
+        try {
+          const token = sessionStorage.getItem("token");
+          if (!token) {
+            console.error("No user token found");
+            return;
+          }
+  
+          const response = await fetch(`${backendUrl}/api/getsavedposts`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+  
+          if (response.status === 404) {
+            setHasNoPosts(true);
+            return;
+          }
+  
+          if (!response.ok) {
+            throw new Error("Failed to fetch posts");
+          }
+  
+          const data = await response.json();
+          setPosts(data);
+          setHasNoPosts(false);
+        } catch (error) {
+          console.error("Error fetching posts:", error);
         }
-
-        const response = await fetch(`${backendUrl}/api/getsavedposts`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch posts");
-        }
-
-        const data = await response.json();
-        setPosts(data);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-      }
-    };
-
-    fetchPosts();
-  }, [backendUrl]);
+      };
+  
+      fetchPosts();
+    }, [backendUrl]);
   const handleSave = async (postId: number, isSaved: boolean) => {
     const token = sessionStorage.getItem("token");
     if (token) {
@@ -165,72 +174,78 @@ function Likedpostspage() {
     <main className="min-h-screen bg-background">
       <div className="container mx-auto py-10">
         <div className="grid gap-6 px-4 py-6 md:px-6 lg:py-12 md:py-8 max-w-3xl mx-auto">
-          <div className="grid gap-4">
-            {posts.map((post) => (
-              <Card key={post.id} className="border-0 rounded-none shadow-none" >
-                <CardHeader className="p-2" onClick={() => handlePostclicks(post.id)}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-bold">
-                      {post.initials}
-                    </div>
-                    <span className="font-medium">{post.username}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0" onClick={() => handlePostclicks(post.id)}>
-                  <img
-                    src={post.attachment_url}
-                    width={800}
-                    height={450}
-                    alt="Post Image"
-                    className="object-cover aspect-video rounded-t-lg"
-                    onClick={() => handlePostclicks(post.id)}
-                  />
-                </CardContent>
-                <CardFooter className="grid gap-2 p-2 pb-4">
-                  <div className="flex items-center w-full">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleLike(post.id, post.isLiked)}
-                    >
-                      <HeartIcon
-                        className={`w-4 h-4 ${
-                          post.isLiked ? "text-red-500" : ""
-                        }`}
-                      />
-                      <span className="sr-only">Like</span>
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <MessageCircleIcon className="w-4 h-4" />
-                      <span className="sr-only">Comments</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleSave(post.id, post.isSaved)}
-                    >
-                      <BookmarkIcon
-                        className={`w-4 h-4 ${
-                          post.isSaved ? "text-blue-500" : ""
-                        }`}
-                        filled={post.isSaved}
-                      />
-                      <span className="sr-only">Save</span>
-                    </Button>
-                    <span className="text-sm font-medium ml-2">
-                      {post.likecount} likes
-                    </span>
-                  </div>
-                  <div className="px-2 text-sm w-full">
-                    <p>
-                      <span className="font-bold">{post.username}</span>{" "}
-                      {post.caption}
-                    </p>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+            {hasNoPosts ? (
+            <div className="flex justify-center items-center h-64">
+            <p className="text-xl text-gray-500">You have no saved posts</p>
           </div>
+            ):(
+                <div className="grid gap-4">
+                {posts.map((post) => (
+                  <Card key={post.id} className="border-0 rounded-none shadow-none" >
+                    <CardHeader className="p-2" onClick={() => handlePostclicks(post.id)}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-bold">
+                          {post.initials}
+                        </div>
+                        <span className="font-medium">{post.username}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0" onClick={() => handlePostclicks(post.id)}>
+                      <img
+                        src={post.attachment_url}
+                        width={800}
+                        height={450}
+                        alt="Post Image"
+                        className="object-cover aspect-video rounded-t-lg"
+                        onClick={() => handlePostclicks(post.id)}
+                      />
+                    </CardContent>
+                    <CardFooter className="grid gap-2 p-2 pb-4">
+                      <div className="flex items-center w-full">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleLike(post.id, post.isLiked)}
+                        >
+                          <HeartIcon
+                            className={`w-4 h-4 ${
+                              post.isLiked ? "text-red-500" : ""
+                            }`}
+                          />
+                          <span className="sr-only">Like</span>
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <MessageCircleIcon className="w-4 h-4" />
+                          <span className="sr-only">Comments</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSave(post.id, post.isSaved)}
+                        >
+                          <BookmarkIcon
+                            className={`w-4 h-4 ${
+                              post.isSaved ? "text-blue-500" : ""
+                            }`}
+                            filled={post.isSaved}
+                          />
+                          <span className="sr-only">Save</span>
+                        </Button>
+                        <span className="text-sm font-medium ml-2">
+                          {post.likecount} likes
+                        </span>
+                      </div>
+                      <div className="px-2 text-sm w-full">
+                        <p>
+                          <span className="font-bold">{post.username}</span>{" "}
+                          {post.caption}
+                        </p>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>   
+            )}
         </div>
       </div>
     </main>
