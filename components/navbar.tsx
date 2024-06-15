@@ -17,7 +17,6 @@ interface ComponentProps {}
 import "dotenv/config";
 import { parseJwt } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 const Navbar: FC<ComponentProps> = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const { setTheme } = useTheme();
@@ -178,12 +177,22 @@ const Navbar: FC<ComponentProps> = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <HeartIcon className="w-4 h-4 mr-2" />
-                  Liked Posts
+                  <Link
+                    href="/posts/liked"
+                    className="flex items-center w-full"
+                  >
+                    <HeartIcon className="w-4 h-4 mr-2" />
+                    Liked Posts
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <BookmarkIcon className="w-4 h-4 mr-2" />
-                  Saved Posts
+                  <Link
+                    href="/posts/saved"
+                    className="flex items-center w-full"
+                  >
+                    <BookmarkIcon className="w-4 h-4 mr-2" />
+                    Saved Posts
+                  </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

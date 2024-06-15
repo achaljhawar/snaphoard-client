@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   const now = new Date();
 
   try {
-    // Fetch posts to publish with a limit
     const { data, error } = await supabase
       .from("scheduled_posts")
       .select("*")

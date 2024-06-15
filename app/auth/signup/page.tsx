@@ -24,8 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast, Toaster } from "react-hot-toast";
+import { useRouter } from "next/router";
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
 export default function LoginPage() {
+  const router = useRouter();
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,7 +54,7 @@ export default function LoginPage() {
     checkAuth();
   }, [loggedIn]);
   if (loggedIn) {
-    return null; // Or you could return a loading spinner here
+    return null; 
   }
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh]">

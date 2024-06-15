@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import withAuth from "@/components/withAuth";
@@ -20,18 +20,49 @@ import { Calendar } from "@/components/ui/calendar";
 import { useUploadThing } from "@/components/uploadthing";
 import * as z from "zod";
 import { toast, Toaster } from "react-hot-toast";
-
+import { parseJwt } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 const Component: React.FC = () => {
+  const router = useRouter();
   const [isScheduled, setIsScheduled] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const captionRef = useRef<HTMLTextAreaElement>(null);
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [url, setUrl] = useState<string>("/placeholder.svg");
   const [imageObject, setImageObject] = useState<File | null>(null);
-  const [selectedHour, setSelectedHour] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [selectedMinute, setSelectedMinute] = useState<string | null>(null);
-
+  const [selectedHour, setSelectedHour] = useState<string>("");
+  const [selectedMinute, setSelectedMinute] = useState<string>("");
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        if (token !== null && token !== undefined) {
+          const response = await fetch(backendUrl + "/api/checkauth", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (response.ok) {
+            setLoggedIn(true);
+            const payload = parseJwt(token);
+            const firstName = payload.firstName;
+            const lastName = payload.lastName;
+            const role = payload.role;
+          } else {
+            sessionStorage.removeItem("token");
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    checkAuth();
+  }, [loggedIn]);
   const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
       toast.success("Uploaded successfully!");
@@ -60,19 +91,23 @@ const Component: React.FC = () => {
       date: z.date().optional(),
       hour: z
         .string()
-        .refine((val) => !isNaN(parseInt(val)), "Invalid hour format")
-        .refine((val) => val.length === 2, "Hour must be in 24-hour format")
+        .refine(
+          (val) => val === "" || (!isNaN(parseInt(val)) && val.length === 2),
+          "Invalid hour format"
+        )
         .optional(),
       minute: z
         .string()
-        .refine((val) => !isNaN(parseInt(val)), "Invalid minute format")
-        .refine((val) => val.length === 2, "Minute must be in 2-digit format")
+        .refine(
+          (val) => val === "" || (!isNaN(parseInt(val)) && val.length === 2),
+          "Invalid minute format"
+        )
         .optional(),
     })
     .refine(
       (data) => {
         if (isScheduled) {
-          if (!data.date || !data.hour || !data.minute) {
+          if (!data.date || data.hour === "" || data.minute === "") {
             return false;
           }
           const now = new Date();
@@ -80,8 +115,8 @@ const Component: React.FC = () => {
             data.date.getFullYear(),
             data.date.getMonth(),
             data.date.getDate(),
-            parseInt(data.hour),
-            parseInt(data.minute)
+            parseInt(data.hour!),
+            parseInt(data.minute!)
           );
           return scheduledTime > now;
         }
@@ -118,8 +153,8 @@ const Component: React.FC = () => {
       if (isScheduled) {
         if (
           !validatedData.date ||
-          !validatedData.hour ||
-          !validatedData.minute
+          validatedData.hour === "" ||
+          validatedData.minute === ""
         ) {
           throw new Error(
             "All scheduling fields (date, hour, minute) must be set"
@@ -132,8 +167,8 @@ const Component: React.FC = () => {
           validatedData.date.getFullYear(),
           validatedData.date.getMonth(),
           validatedData.date.getDate(),
-          parseInt(validatedData.hour),
-          parseInt(validatedData.minute)
+          parseInt(validatedData.hour!),
+          parseInt(validatedData.minute!)
         );
         const timeDiff = scheduledTime.getTime() - now.getTime();
         const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
@@ -166,6 +201,7 @@ const Component: React.FC = () => {
         });
         if (response.ok) {
           toast.success("Post created successfully");
+          router.push("/posts");
         } else {
           throw new Error(`Error creating post`);
         }
@@ -193,6 +229,7 @@ const Component: React.FC = () => {
         const responseData = await response.json();
         if (response.ok) {
           toast.success("Post created successfully");
+          router.push("/posts");
         } else {
           throw new Error(`Error creating post: ${responseData.message}`);
         }
@@ -250,6 +287,7 @@ const Component: React.FC = () => {
 
   return (
     <>
+      <Toaster position="top-center" reverseOrder={false} />
       <br />
       <br />
       <br />

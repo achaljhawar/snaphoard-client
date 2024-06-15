@@ -32,9 +32,8 @@ interface LikeEventData {
   user_id: number;
 }
 import withAuth from "@/components/withAuth";
-function Mainfeedpage() {
+function Likedpostspage() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND;
   const router = useRouter();
   useEffect(() => {
@@ -46,7 +45,7 @@ function Mainfeedpage() {
           return;
         }
 
-        const response = await fetch(`${backendUrl}/api/getallpostinfo`, {
+        const response = await fetch(`${backendUrl}/api/getlikedposts`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -314,4 +313,4 @@ function eyeicon(props: React.SVGProps<SVGSVGElement>) {
     <circle cx="12" cy="12" r="3" />
   </svg>;
 }
-export default withAuth(Mainfeedpage);
+export default withAuth(Likedpostspage);

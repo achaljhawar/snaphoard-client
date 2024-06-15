@@ -85,7 +85,7 @@ function Page({ params }: { params: { slug: number } }) {
           setPostInfo(data);
           setlikecount(data.likecount);
           setIsLiked(data.isliked);
-          setIsSaved(data.issaved); // Add this line
+          setIsSaved(data.issaved);
         } else {
           console.error("Error fetching post info:", response.statusText);
         }
@@ -175,7 +175,7 @@ function Page({ params }: { params: { slug: number } }) {
         <div className="w-full max-w-3xl mx-auto">
           <header className="flex items-center justify-between py-4 border-b">
             <Link
-              href="#"
+              href="/posts"
               className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
               prefetch={false}
             >
