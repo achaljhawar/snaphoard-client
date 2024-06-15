@@ -61,7 +61,7 @@ const Navbar: FC<ComponentProps> = () => {
       }
     };
     checkAuth();
-  }, [loggedIn]);
+  }, [loggedIn, backendUrl]);
 
   const handleThemeToggle = () => {
     setIsDarkMode(!isDarkMode);

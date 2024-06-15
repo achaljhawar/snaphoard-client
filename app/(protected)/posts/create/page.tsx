@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import withAuth from "@/components/withAuth";
+import Image from "next/image";
 import {
   Select,
   SelectTrigger,
@@ -36,6 +37,17 @@ const Component: React.FC = () => {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
+  const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
+    onClientUploadComplete: (res) => {
+      toast.success("Uploaded successfully!");
+    },
+    onUploadError: (error) => {
+      toast.error(`Error occurred while uploading: ${error.message}`);
+    },
+    onUploadBegin: () => {
+      toast.loading("Upload has begun...");
+    },
+  });
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -62,7 +74,7 @@ const Component: React.FC = () => {
       }
     };
     checkAuth();
-  }, [loggedIn]);
+  }, [loggedIn,backendUrl]);
   if (role == "Viewer") {
     return (
       <div className="flex justify-center items-center h-64">
@@ -72,17 +84,7 @@ const Component: React.FC = () => {
       </div>
     );
   }
-  const { startUpload, permittedFileInfo } = useUploadThing("imageUploader", {
-    onClientUploadComplete: (res) => {
-      toast.success("Uploaded successfully!");
-    },
-    onUploadError: (error) => {
-      toast.error(`Error occurred while uploading: ${error.message}`);
-    },
-    onUploadBegin: () => {
-      toast.loading("Upload has begun...");
-    },
-  });
+
 
   const formSchema = z
     .object({
@@ -302,7 +304,7 @@ const Component: React.FC = () => {
         <div className="w-full max-w-4xl bg-white rounded-lg dark:bg-gray-900 p-6 flex flex-col md:flex-row gap-6">
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden dark:bg-gray-800">
-              <img
+              <Image
                 src={url}
                 alt="Post Image"
                 width={400}

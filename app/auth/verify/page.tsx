@@ -50,7 +50,7 @@ function VerifyPageContent() {
     if (email && verification_code) {
       verifyUser();
     }
-  }, [email, verification_code]);
+  }, [email, verification_code, backendUrl]);
 
   return (
     <div className="flex items-center justify-center h-screen bg-white dark:bg-[#09090B]">
