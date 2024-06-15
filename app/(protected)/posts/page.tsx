@@ -9,7 +9,6 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { io } from "socket.io-client";
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -176,7 +175,7 @@ function Mainfeedpage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-0" onClick={() => handlePostclicks(post.id)}>
-                  <Image
+                  <img
                     src={post.attachment_url}
                     width={800}
                     height={450}

@@ -2,7 +2,7 @@ import React, { FC } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+
 interface BrushIconProps {
   className?: string;
 }
@@ -83,7 +83,7 @@ const Page: FC = () => {
       <main className="flex-1">
         <section className="w-full pt-12 md:pt-24 lg:pt-32">
           <div className="container grid gap-6 px-4 md:px-6 lg:grid-cols-2 lg:gap-12">
-            <Image
+            <img
               src="https://cdn.dribbble.com/userupload/4483363/file/original-9914edde0ebe860f5f8f6a1263db039b.png?resize=2400x1800"
               width="400"
               height="400"
@@ -191,21 +191,21 @@ const Page: FC = () => {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
-              <Image
+              <img
                 src="https://pbs.twimg.com/media/DXvQD3BVQAAlOtE?format=jpg&name=4096x4096"
                 width="409.6"
                 height="409.6"
                 alt="Poster"
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover"
               />
-              <Image
+              <img
                 src="https://pbs.twimg.com/media/EBz-uhjXkAYLWcJ?format=jpg&name=4096x4096"
                 width="409.6"
                 height="409.6"
                 alt="Poster"
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover"
               />
-              <Image
+              <img
                 src="https://pbs.twimg.com/media/DQfmkafX0AAZJyJ?format=jpg&name=4096x4096"
                 width="409.6"
                 height="409.6"

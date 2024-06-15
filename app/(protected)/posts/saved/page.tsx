@@ -189,7 +189,7 @@ function Likedpostspage() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-0" onClick={() => handlePostclicks(post.id)}>
-                      <Image
+                      <img
                         src={post.attachment_url}
                         width={800}
                         height={450}

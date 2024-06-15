@@ -16,7 +16,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { parseJwt } from "@/lib/utils";
 import withAuth from "@/components/withAuth";
-import Image from "next/image";
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
 const socket = io(backendUrl, {
   reconnection: true,
@@ -180,7 +179,7 @@ function Page({ params }: { params: { slug: number } }) {
             </Link>
           </header>
           <div className="py-8">
-            <Image
+            <img
               src={postInfo.image_url}
               width={800}
               height={600}
